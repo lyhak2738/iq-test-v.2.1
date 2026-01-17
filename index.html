@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ការធ្វើតេស្ត IQ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&display=swap');
+        body { font-family: 'Battambang', sans-serif; margin: 0; padding: 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const IQPuzzleGame = () => {
+            const [gameState, setGameState] = useState('menu');
+            const [currentQuestion, setCurrentQuestion] = useState(0);
+            const [score, setScore] = useState(0);
+            const [timeLeft, setTimeLeft] = useState(30);
+            const [selectedAnswer, setSelectedAnswer] = useState(null);
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [userAnswers, setUserAnswers] = useState([]);
+
+            const puzzles = [
+                { type: 'បញ្ហាប្រឌិត', question: 'នារីម្នាក់មានកូនស្រី ៤ នាក់។ កូនស្រីនីមួយៗមានបងប្រុស ១ នាក់។ តើនារីនោះមានកូនសរុបប៉ុន្មាននាក់?', hint: 'គិតឱ្យបានប្រុងប្រយ័ត្ន!', options: ['៤ នាក់', '៥ នាក់', '៨ នាក់', '៩ នាក់'], correct: 1, points: 18 },
+                { type: 'គណិតវិទ្យា', question: 'ប្រសិនបើ ១ = ៥, ២ = ២៥, ៣ = ៣២៥, ៤ = ៤៣២៥ តើ ៥ = ប៉ុន្មាន?', hint: 'វាមិនមែន ៥៤៣២៥ ទេ', options: ['៥៤៣២៥', '១', '៥', '៥០'], correct: 1, points: 25 },
+                { type: 'តក្កវិជ្ជា', question: 'មនុស្សម្នាក់ទៅផ្សារទិញទំនិញ ១០ រៀល។ គាត់មានប្រាក់ ១០០០ រៀល ប៉ុន្តែមិនមានប្រាក់ដុំតូច។ អ្នកលក់គ្មានប្រាក់អាប់។ តើគាត់អាចទិញបានយ៉ាងដូចម្តេច?', options: ['ទិញអាហារ ១០០០ រៀល', 'ខ្ចីប្រាក់មិត្តភ័ក្តិ', 'ទៅធនាគារដូរប្រាក់', 'មិនទិញ ត្រឡប់ទៅវិញ'], correct: 0, points: 20 },
+                { type: 'បញ្ហាប្រឌិត', question: 'រថភ្លើងធ្វើដំណើរពីក្រុង A ទៅក្រុង B ក្នុង ៥ ម៉ោង។ រថភ្លើងមួយទៀតធ្វើដំណើរពីក្រុង B ទៅក្រុង A ក្នុង ៣ ម៉ោង។ តើពេលណាពួកគេជួបគ្នា?', hint: 'វាមិនមែន ៤ ម៉ោងទេ', options: ['១.៨៧៥ ម៉ោង', '២.៥ ម៉ោង', '៤ ម៉ោង', '៣.៥ ម៉ោង'], correct: 0, points: 28 },
+                { type: 'គណិតវិទ្យា', question: 'ក្នុងស្រះមួយមានត្រី ១០ ក្បាល។ ត្រី ២ ក្បាលលង់ទឹក ត្រី ៣ ក្បាលហែលចេញ ត្រី ៤ ក្បាលលាក់ខ្លួន។ តើមានត្រីនៅក្នុងស្រះប៉ុន្មានក្បាល?', hint: 'គិតអំពីពាក្យសំណួរ', options: ['១ ក្បាល', '៣ ក្បាល', '៧ ក្បាល', '១០ ក្បាល'], correct: 3, points: 15 },
+                { type: 'តក្កវិជ្ជា', question: 'មនុស្ស ៣ នាក់ចូលសណ្ឋាគារ។ ថ្លៃបន្ទប់ ៣០ ដុល្លារ ម្នាក់ដាក់ ១០ ដុល្លារ។ បន្ទាប់មកកាត់តម្លៃ ៥ ដុល្លារ។ អ្នកបម្រើយក ២ ដុល្លារ រួចសងម្នាក់ ១ ដុល្លារ។ ដូច្នេះម្នាក់ចំណាយ ៉ ដុល្លារ គឺសរុប ២៧ ដុល្លារ បូកប្រាក់អ្នកបម្រើ ២ ដុល្លារ = ២៩ ដុល្លារ។ តើ ១ ដុល្លារទៀតនៅឯណា?', options: ['អ្នកបម្រើលួច', 'គ្មានលុយបាត់', 'នៅសណ្ឋាគារ', 'គណនាខុស'], correct: 3, points: 30 },
+                { type: 'បញ្ហាប្រឌិត', question: 'មនុស្សម្នាក់ស្លាប់ និងទៅស្ថានសួគ៌។ គាត់បានជួបទ្វារចំនួន ២។ មនុស្ស ១ នាក់ឈរមុខទ្វារនីមួយៗ។ មនុស្ស ១ នាក់និយាយតែពិត មនុស្ស ១ នាក់និយាយតែកុហក។ គាត់អាចសួរតែសំណួរ ១ មុខ។ តើគាត់គួរសួរអ្វី?', hint: 'សួរពីអ្វីដែលអ្នកទាំងពីរនឹងឆ្លើយដូចគ្នា', options: ['ទ្វារនេះទៅសួគ៌?', 'អ្នកនិយាយពិត?', 'បើសួរគាត់ ទ្វារណាទៅសួគ៌?', 'គ្មានដំណោះស្រាយ'], correct: 2, points: 32 },
+                { type: 'គណិតវិទ្យា', question: 'ប្រសិនបើអ្នកដំណើរម៉ាស៊ីនពេលវេលា និងសម្លាប់ជីតារបស់អ្នក តើអ្នកនឹងមិនកើតឬ?', hint: 'paradox ប្រឌិត!', options: ['នឹងមិនកើត', 'នៅតែកើត', 'កើតក្នុងលោកផ្សេង', 'paradox មិនអាចដោះស្រាយ'], correct: 3, points: 25 },
+                { type: 'តក្កវិជ្ជា', question: 'អ្នករត់ប្រណាំង និងរត់លើសមនុស្សលំដាប់ទី ២។ តើអ្នកនៅលំដាប់ទីប៉ុន្មាន?', options: ['លំដាប់ទី ១', 'លំដាប់ទី ២', 'លំដាប់ទី ៣', 'អាស្រ័យលើចម្ងាយ'], correct: 1, points: 18 },
+                { type: 'បញ្ហាប្រឌិត', question: 'ខ្ញុំមានក្បាល ប៉ុន្តែគ្មានខួរ។ ខ្ញុំមានមាត់ ប៉ុន្តែមិនធ្លាប់ញ៉ាំ។ ខ្ញុំមានគ្រែ ប៉ុន្តែមិនដេក។ ខ្ញុំរត់ប៉ុន្តែគ្មានជើង។ តើខ្ញុំជាអ្វី?', options: ['មនុស្សសេះ', 'ទន្លេ', 'ម៉ាស៊ីន', 'ស្មារតី'], correct: 1, points: 22 },
+                { type: 'គណិតវិទ្យា', question: 'ក្នុងបន្ទប់អងគុយមានកៅអី ៤ជើង ចំនួន ៣ ក្នុង និងកៅអី ៣ជើង ចំនួន ៤ ក្នុង។ មនុស្ស ៥ នាក់អង្គុយ (មនុស្សមាន ២ ជើង)។ មានឆ្កែ ២ ក្បាល (ឆ្កែមាន ៤ ជើង)។ តើមានជើងសរុបក្នុងបន្ទប់ប៉ុន្មាន?', hint: 'កុំភ្លេចជើងកៅអី!', options: ['៤០', '៤២', '៥០', '៥២'], correct: 2, points: 28 },
+                { type: 'តក្កវិជ្ជា', question: 'ឪពុករបស់ខ្ញុំមានកូន ៥ នាក់។ កូន ៤ នាក់មានឈ្មោះ Haha, Hehe, Hihi, Hoho។ តើកូនទី ៥ ឈ្មោះអ្វី?', hint: 'សំណួរនិយាយអំពីខ្ញុំ', options: ['Huhu', 'Hyhy', 'ខ្ញុំ', 'Haha'], correct: 2, points: 20 },
+                { type: 'បញ្ហាប្រឌិត', question: 'អ្នកនៅក្នុងបន្ទប់អងគុយមួយ ដែលមានទ្វារចំនួន ២។ ទ្វារមួយនាំទៅរកសេរីភាព ទ្វារមួយទៀតនាំទៅរកសេះកំផ្លៀង។ ចំពោះមុខទ្វារនីមួយៗមានឆ្មាំ ១ នាក់។ ឆ្មាំ ១ នាក់និយាយតែពិត រីឯម្នាក់ទៀតឆ្លាស់ពិតកុហក។ អ្នកមិនដឹងថាឆ្មាំណានិយាយពិត។ អ្នកអាចសួរឆ្មាំម្នាក់ណាក៏បាន តែសំណួរ ១ មុខ។ តើអ្នកសួរអ្វី?', hint: 'សួរឆ្មាំម្នាក់អំពីអ្វីដែលឆ្មាំម្នាក់ទៀតនឹងនិយាយ', options: ['ទ្វារនេះទៅណា?', 'អ្នកនិយាយពិតទេ?', 'បើសួរឆ្មាំម្នាក់ទៀត ទ្វារណាទៅសេរីភាព គាត់នឹងចង្អុលទ្វារណា?', 'ខ្ញុំគួរដើរតាមទ្វារនេះទេ?'], correct: 2, points: 35 },
+                { type: 'គណិតវិទ្យា', question: 'ប្រសិនបើ ៥+៣=២៨, ៩+១=៨១០, ៨+៦=២១៤, ៥+៤=១៩ តើ ៧+៣=ប៉ុន្មាន?', hint: 'មើលលំដាប់នៃប្រមាណវិធី', options: ['១០', '២១០', '៤១០', '៤៣'], correct: 2, points: 30 },
+                { type: 'តក្កវិជ្ជា', question: 'មនុស្ស ១០០ នាក់ឈរតាមជួរ។ នាក់ទី ១ គេគាប់មនុស្សគ្រប់ ២ នាក់។ នាក់ទី ២ គេគាប់គ្រប់ ៣ នាក់។ នាក់ទី ៣ គេគាប់គ្រប់ ៤ នាក់។ បន្តបែបនេះរហូតដល់អស់។ នៅចុងបញ្ចប់ តើមានមនុស្សប៉ុន្មាននាក់នៅឈរ?', hint: 'គិតពីលេខកត់', options: ['១០', '១៤', '២០', '២៥'], correct: 1, points: 32 }
+            ];
+
+            useEffect(() => {
+                if (gameState === 'playing' && timeLeft > 0) {
+                    const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+                    return () => clearTimeout(timer);
+                } else if (timeLeft === 0 && gameState === 'playing') handleNextQuestion();
+            }, [timeLeft, gameState]);
+
+            const startGame = () => {
+                setGameState('playing');
+                setCurrentQuestion(0);
+                setScore(0);
+                setTimeLeft(puzzles[0].time);
+                setSelectedAnswer(null);
+                setShowFeedback(false);
+                setUserAnswers([]);
+            };
+
+            const handleAnswer = (index) => {
+                if (showFeedback) return;
+                setSelectedAnswer(index);
+                setShowFeedback(true);
+                const isCorrect = index === puzzles[currentQuestion].correct;
+                setUserAnswers([...userAnswers, { questionIndex: currentQuestion, userAnswer: index, correct: isCorrect }]);
+                if (isCorrect) setScore(score + puzzles[currentQuestion].points + Math.floor(timeLeft / 3));
+                setTimeout(handleNextQuestion, 1500);
+            };
+
+            const handleNextQuestion = () => {
+                if (currentQuestion < puzzles.length - 1) {
+                    const nextQ = currentQuestion + 1;
+                    setCurrentQuestion(nextQ);
+                    setTimeLeft(puzzles[nextQ].time);
+                    setSelectedAnswer(null);
+                    setShowFeedback(false);
+                } else {
+                    setGameState('results');
+                }
+            };
+
+            const calculateIQ = () => {
+                const maxScore = puzzles.reduce((sum, p) => sum + p.points + 11, 0);
+                const percentage = (score / maxScore) * 100;
+                if (percentage >= 90) return { iq: 145, level: 'ជំនាញវិសេសវិសាល', desc: 'ឆ្លាតវៃខ្លាំងណាស់!' };
+                if (percentage >= 80) return { iq: 135, level: 'ឆ្លាតវៃខ្ពស់ណាស់', desc: 'លោកអ្នកពិតជាពូកែ!' };
+                if (percentage >= 70) return { iq: 125, level: 'ឆ្លាតវៃខ្ពស់', desc: 'លទ្ធផលល្អណាស់!' };
+                if (percentage >= 60) return { iq: 115, level: 'ខ្ពស់ជាងមធ្យម', desc: 'លោកអ្នកធ្វើបានល្អ!' };
+                if (percentage >= 50) return { iq: 105, level: 'ខ្ពស់បន្តិច', desc: 'លទ្ធផលល្អ!' };
+                if (percentage >= 40) return { iq: 100, level: 'មធ្យម', desc: 'បន្តព្យាយាម!' };
+                if (percentage >= 30) return { iq: 90, level: 'ទាបជាងមធ្យម', desc: 'ព្យាយាមបន្ថែមទៀត!' };
+                return { iq: 80, level: 'ទាប', desc: 'កុំបារម្ភ ហ្វឹកហាត់បន្ថែម!' };
+            };
+
+            if (gameState === 'menu') {
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 flex items-center justify-center p-4">
+                        <div className="text-center">
+                            <div className="mb-8 flex justify-center">
+                                <div className="bg-white/10 backdrop-blur-lg rounded-full p-8 border-4 border-white/20 shadow-2xl">
+                                    <div className="text-yellow-300 animate-pulse" style={{fontSize: '96px'}}>💡</div>
+                                </div>
+                            </div>
+                            <h1 className="text-6xl font-bold text-white mb-4 drop-shadow-lg">ការធ្វើតេស្ត IQ</h1>
+                            <p className="text-xl text-blue-200 mb-8 max-w-md mx-auto">សាកល្បងជំនាញគិតរបស់អ្នកជាមួយនឹងសំណួរ {puzzles.length} មុខ។ គិតលឿន គិតឆ្លាត!</p>
+                            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-8 max-w-md mx-auto border border-white/20 shadow-xl">
+                                <div className="grid grid-cols-3 gap-4 text-white">
+                                    <div><div className="text-3xl font-bold text-yellow-300">{puzzles.length}</div><div className="text-sm text-blue-200">សំណួរ</div></div>
+                                    <div><div className="text-3xl font-bold text-yellow-300">៣០-៦០</div><div className="text-sm text-blue-200">វិនាទី តាមកម្រិត</div></div>
+                                    <div><div className="text-3xl font-bold text-yellow-300">IQ</div><div className="text-sm text-blue-200">លទ្ធផល</div></div>
+                                </div>
+                            </div>
+                            <button onClick={startGame} className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-12 py-4 rounded-full text-2xl font-bold hover:scale-105 transition-transform shadow-2xl hover:shadow-yellow-500/50 animate-pulse">ចាប់ផ្តើមតេស្ត</button>
+                            <p className="text-blue-200 mt-6 text-sm">🧠 រៀបចំខ្លួនអោយបានល្អ!</p>
+                        </div>
+                    </div>
+                );
+            }
+
+            if (gameState === 'playing') {
+                const puzzle = puzzles[currentQuestion];
+                const isCorrect = selectedAnswer === puzzle.correct;
+                return (
+                    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 p-4">
+                        <div className="max-w-4xl mx-auto">
+                            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-6 border border-white/20 shadow-xl">
+                                <div className="flex justify-between items-center flex-wrap gap-4">
+                                    <div className="flex items-center gap-4">
+                                        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full px-5 py-2 flex items-center gap-2 shadow-lg">
+                                            <span className="text-xl">🏆</span>
+                                            <span className="font-bold text-lg">ពិន្ទុ: {score}</span>
+                                        </div>
+                                        <div className="text-white text-lg font-semibold">សំណួរ {currentQuestion + 1}/{puzzles.length}</div>
+                                    </div>
+                                    <div className={`flex items-center gap-2 px-5 py-2 rounded-full font-bold shadow-lg ${timeLeft <= 10 ? 'bg-red-500 animate-pulse' : 'bg-blue-500'}`}>
+                                        <span className="text-xl">⏰</span>
+                                        <span className="text-white text-lg">{timeLeft} វិនាទី</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white/95 backdrop-blur-lg rounded-3xl p-8 shadow-2xl border-4 border-white/30">
+                                <div className="mb-6">
+                                    <div className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-5 py-2 rounded-full text-sm font-bold mb-4 shadow-lg">
+                                        📚 {puzzle.type} • {puzzle.difficulty}
+                                    </div>
+                                    <h2 className="text-3xl font-bold text-gray-800 mb-4 leading-relaxed">{puzzle.question}</h2>
+                                    {puzzle.sequence && (
+                                        <div className="flex gap-3 text-5xl justify-center mb-6 p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl shadow-inner">
+                                            {puzzle.sequence.map((item, i) => (<span key={i} className="drop-shadow-md">{item}</span>))}
+                                        </div>
+                                    )}
+                                    {puzzle.hint && (<div className="text-base text-gray-700 bg-yellow-50 p-4 rounded-lg border-l-4 border-yellow-400 shadow-md mb-4">💡 ជំនួយ: {puzzle.hint}</div>)}
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {puzzle.options.map((option, index) => (
+                                        <button key={index} onClick={() => handleAnswer(index)} disabled={showFeedback} className={`p-6 rounded-xl text-xl font-bold transition-all transform hover:scale-105 border-4 ${showFeedback ? (index === puzzle.correct ? 'bg-gradient-to-r from-green-400 to-green-600 text-white border-green-700 shadow-xl shadow-green-500/50 scale-105' : (selectedAnswer === index ? 'bg-gradient-to-r from-red-400 to-red-600 text-white border-red-700 shadow-xl shadow-red-500/50' : 'bg-gray-200 text-gray-500 border-gray-300 opacity-50')) : 'bg-gradient-to-br from-blue-500 to-purple-600 text-white border-blue-400 hover:shadow-2xl hover:shadow-blue-500/50 hover:border-purple-400'}`}>{option}</button>
+                                    ))}
+                                </div>
+                                {showFeedback && (
+                                    <div className={`mt-6 p-5 rounded-xl text-center font-bold text-xl shadow-lg ${isCorrect ? 'bg-gradient-to-r from-green-100 to-green-200 text-green-800 border-2 border-green-400' : 'bg-gradient-to-r from-red-100 to-red-200 text-red-800 border-2 border-red-400'}`}>
+                                        {isCorrect ? '🎉 ត្រឹមត្រូវ! +' + (puzzles[currentQuestion].points + Math.floor(timeLeft / 3)) + ' ពិន្ទុ' : '❌ ចម្លើយខុស'}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const result = calculateIQ();
+            const correctCount = userAnswers.filter(a => a.correct).length;
+            const incorrectCount = userAnswers.filter(a => !a.correct).length;
+            const wrongAnswers = userAnswers.filter(a => !a.correct);
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-green-900 via-teal-900 to-blue-900 p-4 overflow-y-auto">
+                    <div className="text-center max-w-4xl mx-auto py-8">
+                        <div className="mb-8 flex justify-center">
+                            <div className="bg-white/10 backdrop-blur-lg rounded-full p-10 border-4 border-white/20 shadow-2xl animate-bounce">
+                                <div className="text-yellow-300 text-9xl">🏆</div>
+                            </div>
+                        </div>
+                        <h1 className="text-5xl font-bold text-white mb-4">បានបញ្ចប់ការធ្វើតេស្ត!</h1>
+                        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white/20 shadow-2xl">
+                            <div className="text-8xl font-bold text-yellow-300 mb-3 drop-shadow-lg">{result.iq}</div>
+                            <div className="text-3xl text-white mb-2 font-bold">{result.level}</div>
+                            <div className="text-xl text-blue-200 mb-6">{result.desc}</div>
+                            <div className="grid grid-cols-4 gap-4 text-white">
+                                <div className="bg-white/10 rounded-xl p-4 backdrop-blur shadow-lg"><div className="text-4xl font-bold text-yellow-300">{score}</div><div className="text-sm text-blue-200">ពិន្ទុសរុប</div></div>
+                                <div className="bg-white/10 rounded-xl p-4 backdrop-blur shadow-lg"><div className="text-4xl font-bold text-green-300">{correctCount}</div><div className="text-sm text-blue-200">ត្រឹមត្រូវ</div></div>
+                                <div className="bg-white/10 rounded-xl p-4 backdrop-blur shadow-lg"><div className="text-4xl font-bold text-red-300">{incorrectCount}</div><div className="text-sm text-blue-200">ខុស</div></div>
+                                <div className="bg-white/10 rounded-xl p-4 backdrop-blur shadow-lg"><div className="text-4xl font-bold text-yellow-300">{Math.round((correctCount / puzzles.length) * 100)}%</div><div className="text-sm text-blue-200">ភាគរយ</div></div>
+                            </div>
+                        </div>
+
+                        {wrongAnswers.length > 0 && (
+                            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white/20 shadow-2xl text-left">
+                                <h2 className="text-3xl font-bold text-white mb-6 text-center">📝 សំណួរដែលខុស ({wrongAnswers.length})</h2>
+                                <div className="space-y-4 max-h-96 overflow-y-auto">
+                                    {wrongAnswers.map((answer, idx) => {
+                                        const puzzle = puzzles[answer.questionIndex];
+                                        return (
+                                            <div key={idx} className="bg-white/10 rounded-xl p-5 border-2 border-red-400/50">
+                                                <div className="flex items-start gap-3">
+                                                    <span className="text-2xl">❌</span>
+                                                    <div className="flex-1">
+                                                        <div className="text-white font-bold mb-2">សំណួរ {answer.questionIndex + 1}: {puzzle.question}</div>
+                                                        <div className="text-red-300 mb-1">ចម្លើយរបស់អ្នក: <span className="font-bold">{puzzle.options[answer.userAnswer]}</span></div>
+                                                        <div className="text-green-300">ចម្លើយត្រឹមត្រូវ: <span className="font-bold">{puzzle.options[puzzle.correct]}</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
+                        {wrongAnswers.length === 0 && (
+                            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 mb-6 border border-white/20 shadow-2xl">
+                                <div className="text-6xl mb-4">🎉</div>
+                                <h2 className="text-3xl font-bold text-yellow-300 mb-2">ល្អឥតខ្ចោះ!</h2>
+                                <p className="text-xl text-white">អ្នកឆ្លើយត្រូវទាំងអស់គ្នា! 100% ពិសេសណាស់!</p>
+                            </div>
+                        )}
+
+                        <p className="text-2xl text-blue-200 mb-8 font-semibold">
+                            {result.iq >= 130 ? '🌟 លទ្ធផលពិសេសណាស់!' : result.iq >= 110 ? '👏 ល្អណាស់!' : result.iq >= 90 ? '💪 បានល្អ!' : '📚 បន្តហ្វឹកហាត់!'}
+                        </p>
+
+                        <button onClick={startGame} className="bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white px-16 py-5 rounded-full text-2xl font-bold hover:scale-105 transition-transform shadow-2xl hover:shadow-yellow-500/50 mb-4">🔄 លេងម្តងទៀត</button>
+                        <p className="text-blue-300 text-sm">💡 ព្យាយាមចំណាយពេលតិច ដើម្បីទទួលបានពិន្ទុបូណាស់!</p>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<IQPuzzleGame />, document.getElementById('root'));
+    </script>
+</body>
+</html>
